@@ -83,6 +83,13 @@ IF(NOT PA_USE_WASAPI)
 SET(DEF_EXCLUDE_WASAPI_SYMBOLS ";")
 ENDIF(NOT PA_USE_WASAPI)
 
+# MinGW build does not allow for plainconverters, see
+# Richard Shaw: http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
+# See according change in cmake_support/template_portaudio.def 43
+IF(MINGW)
+SET(DEF_EXCLUDE_X86PLAINCONV ";")
+ENDIF(MINGW)
+
 IF(PA_USE_WDMKS_DEVICE_INFO)
 ADD_DEFINITIONS(-DPAWIN_USE_WDMKS_DEVICE_INFO)
 ENDIF(PA_USE_WDMKS_DEVICE_INFO)
@@ -259,8 +266,14 @@ SET(PA_PLATFORM_SOURCES
   src/os/win/pa_win_waveformat.c
   src/os/win/pa_win_wdmks_utils.c
   src/os/win/pa_win_coinitialize.c
+)
+
+# http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
+IF(NOT MINGW)
+list(APPEND PA_PLATFORM_SOURCES
   src/os/win/pa_x86_plain_converters.c
 )
+ENDIF(NOT MINGW)
 
 SOURCE_GROUP("os\\win" FILES
   ${PA_PLATFORM_SOURCES}
@@ -320,6 +333,12 @@ CONFIGURE_FILE( cmake_support/template_portaudio.def ${CMAKE_CURRENT_BINARY_DIR}
 CONFIGURE_FILE( cmake_support/options_cmake.h.in ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h @ONLY )
 
 IF(WIN32)
+
+# http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
+IF(MINGW)
+TARGET_LINK_LIBRARIES(portaudio winmm)
+ENDIF(MINGW)
+
 # If we use DirectSound, we need this for the library to be found (if not in VS project settings)
 IF(PA_USE_DS AND DXSDK_FOUND)
 TARGET_LINK_LIBRARIES(portaudio ${DXSDK_DSOUND_LIBRARY})
