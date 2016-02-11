@@ -16,10 +16,21 @@ else(WIN32)
   message(FATAL_ERROR "FindDXSDK.cmake: Unsupported platform ${CMAKE_SYSTEM_NAME}" )
 endif(WIN32)
 
+file(GLOB results "${CMAKE_CURRENT_SOURCE_DIR}/../dx*")
+foreach(f ${results})
+  if(IS_DIRECTORY ${f})
+    set(DXSDK_DIR ${DXSDK_DIR} ${f})
+  endif()
+endforeach()
+
 find_path(DXSDK_ROOT_DIR
   include/dxsdkver.h
   HINTS
-    $ENV{DXSDK_DIR}
+    if(MINGW)
+      ${DXSDK_DIR}
+    else(MINGW)
+      $ENV{DXSDK_DIR}
+    endif(MINGW)
 )
 
 find_path(DXSDK_INCLUDE_DIR
@@ -28,19 +39,19 @@ find_path(DXSDK_INCLUDE_DIR
     ${DXSDK_ROOT_DIR}/include 
 )  
 
-IF(CMAKE_CL_64)
+IF(CMAKE_CL_64 OR  CMAKE_C_COMPILER MATCHES "64")
 find_path(DXSDK_LIBRARY_DIR
   dsound.lib
   PATHS
   ${DXSDK_ROOT_DIR}/lib/x64
 )
-ELSE(CMAKE_CL_64)
+ELSE(CMAKE_CL_64 OR CMAKE_C_COMPILER MATCHES "64")
 find_path(DXSDK_LIBRARY_DIR
   dsound.lib
   PATHS
   ${DXSDK_ROOT_DIR}/lib/x86
 )
-ENDIF(CMAKE_CL_64)
+ENDIF(CMAKE_CL_64 OR CMAKE_C_COMPILER MATCHES "64")
 
 find_library(DXSDK_DSOUND_LIBRARY 
   dsound.lib
