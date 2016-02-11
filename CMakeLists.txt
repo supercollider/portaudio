@@ -362,6 +362,7 @@ SET_TARGET_PROPERTIES(portaudio_static PROPERTIES OUTPUT_NAME portaudio_static_$
                                 FOLDER "Portaudio")
 ENDIF(WIN32)
 
+OPTION(PA_BUILD_CXX "Include C++ bindings" OFF)
 OPTION(PA_BUILD_TESTS "Include test projects" OFF)
 OPTION(PA_BUILD_EXAMPLES "Include example projects" OFF)
 

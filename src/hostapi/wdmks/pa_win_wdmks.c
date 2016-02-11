@@ -63,8 +63,10 @@ of a device for the duration of active stream using those devices
 
 #ifdef __GNUC__
 #include <initguid.h>
+#ifndef __MINGW64_VERSION_MAJOR
 #define _WIN32_WINNT 0x0501
 #define WINVER 0x0501
+#endif
 #endif
 
 #include <string.h> /* strlen() */
@@ -94,7 +96,9 @@ of a device for the duration of active stream using those devices
 #endif
 
 #include <windows.h>
+#ifndef __MINGW64_VERSION_MAJOR
 #include <winioctl.h>
+#endif
 #include <process.h>
 
 #include <math.h>

@@ -1,7 +1,7 @@
 #include <iostream>
 #include "portaudiocpp/PortAudioCpp.hxx"
 
-#ifdef WIN32
+#if PA_USE_ASIO
 #include "portaudiocpp/AsioDeviceAdapter.hxx"
 #endif
 
@@ -109,7 +109,7 @@ int main(int, char*[])
 			std::cout << "Default high input latency  = " << (*i).defaultHighInputLatency() << std::endl; // 8.3
 			std::cout << "Default high output latency = " << (*i).defaultHighOutputLatency() << std::endl; // 8.3
 
-#ifdef WIN32
+#if PA_USE_ASIO
 			// ASIO specific latency information:
 			if ((*i).hostApi().typeId() == paASIO)
 			{
@@ -124,7 +124,7 @@ int main(int, char*[])
 				else
 					std::cout << "ASIO buffer granularity     = " << asioDevice.granularity() << std::endl;
 			}
-#endif // WIN32
+#endif // PA_USE_ASIO
 
 			std::cout << "Default sample rate         = " << (*i).defaultSampleRate() << std::endl; // 8.2
 
