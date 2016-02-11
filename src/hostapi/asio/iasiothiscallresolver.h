@@ -116,7 +116,7 @@
 
 // If microsoft compiler we can call IASIO directly so IASIOThiscallResolver
 // is not used.
-#if !defined(_MSC_VER)
+#if defined(_GNUC_)
 
 
 // The following is in order to ensure that this header is only included after
@@ -188,7 +188,7 @@ public:
 #define ASIOInit(name) IASIOThiscallResolver::ASIOInit((name))
 
 
-#endif /* !defined(_MSC_VER) */
+#endif /* defined(_GNUC_) */
 
 #endif /* Win32 */
 
