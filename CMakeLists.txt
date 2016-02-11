@@ -64,14 +64,12 @@ ELSE(DXSDK_FOUND)
 OPTION(PA_USE_DS "Enable support for DirectSound" OFF)
 ENDIF(DXSDK_FOUND)
 OPTION(PA_USE_WMME "Enable support for MME" ON)
-IF(MINGW)
-OPTION(PA_USE_WASAPI "Enable support for WASAPI" OFF)
-OPTION(PA_USE_WDMKS "Enable support for WDMKS" OFF)
-OPTION(PA_USE_WDMKS_DEVICE_INFO "Use WDM/KS API for device info" OFF)
-ELSE(MINGW)
-OPTION(PA_USE_WASAPI "Enable support for WASAPI" ON)
 OPTION(PA_USE_WDMKS "Enable support for WDMKS" ON)
 OPTION(PA_USE_WDMKS_DEVICE_INFO "Use WDM/KS API for device info" ON)
+IF(MINGW)
+OPTION(PA_USE_WASAPI "Enable support for WASAPI" OFF)
+ELSE(MINGW)
+OPTION(PA_USE_WASAPI "Enable support for WASAPI" ON)
 ENDIF(MINGW)
 MARK_AS_ADVANCED(PA_USE_WDMKS_DEVICE_INFO)
 IF(PA_USE_DS)
@@ -88,13 +86,6 @@ ENDIF(NOT PA_USE_ASIO)
 IF(NOT PA_USE_WASAPI)
 SET(DEF_EXCLUDE_WASAPI_SYMBOLS ";")
 ENDIF(NOT PA_USE_WASAPI)
-
-# MinGW build does not allow for plainconverters, see
-# Richard Shaw: http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
-# See according change in cmake_support/template_portaudio.def 43
-IF(MINGW)
-SET(DEF_EXCLUDE_X86PLAINCONV ";")
-ENDIF(MINGW)
 
 IF(PA_USE_WDMKS_DEVICE_INFO)
 ADD_DEFINITIONS(-DPAWIN_USE_WDMKS_DEVICE_INFO)
@@ -116,11 +107,11 @@ INCLUDE_DIRECTORIES(${ASIOSDK_ROOT_DIR}/host/pc)
 
 SET(PA_ASIO_INCLUDES
   include/pa_asio.h
-)  
+)
 
-SET(PA_ASIO_SOURCES 
+SET(PA_ASIO_SOURCES
   src/hostapi/asio/pa_asio.cpp
-)  
+)
 
 SET(PA_ASIOSDK_SOURCES
   ${ASIOSDK_ROOT_DIR}/common/asio.cpp
@@ -206,12 +197,12 @@ SET(PA_SKELETON_SOURCES
   src/hostapi/skeleton/pa_hostapi_skeleton.c
 )
 
-SOURCE_GROUP("hostapi\\skeleton" 
+SOURCE_GROUP("hostapi\\skeleton"
   ${PA_SKELETON_SOURCES})
 
 #######################################
 IF(WIN32)
-SET(PA_INCLUDES 
+SET(PA_INCLUDES
   include/portaudio.h
   ${PA_ASIO_INCLUDES}
   ${PA_DS_INCLUDES}
@@ -266,20 +257,14 @@ SOURCE_GROUP("cmake_generated" FILES
 )
 
 IF(WIN32)
-SET(PA_PLATFORM_SOURCES 
+SET(PA_PLATFORM_SOURCES
   src/os/win/pa_win_hostapis.c
   src/os/win/pa_win_util.c
   src/os/win/pa_win_waveformat.c
   src/os/win/pa_win_wdmks_utils.c
   src/os/win/pa_win_coinitialize.c
-)
-
-# http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
-IF(NOT MINGW)
-list(APPEND PA_PLATFORM_SOURCES
   src/os/win/pa_x86_plain_converters.c
 )
-ENDIF(NOT MINGW)
 
 SOURCE_GROUP("os\\win" FILES
   ${PA_PLATFORM_SOURCES}
@@ -383,4 +368,3 @@ SUBDIRS(examples)
 ENDIF(PA_BUILD_EXAMPLES)
 
 #################################
-
