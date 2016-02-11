@@ -63,10 +63,17 @@ OPTION(PA_USE_DS "Enable support for DirectSound" ON)
 ELSE(DXSDK_FOUND)
 OPTION(PA_USE_DS "Enable support for DirectSound" OFF)
 ENDIF(DXSDK_FOUND)
+IF(MINGW)
+OPTION(PA_USE_WMME "Enable support for MME" ON)
+OPTION(PA_USE_WASAPI "Enable support for WASAPI" OFF)
+OPTION(PA_USE_WDMKS "Enable support for WDMKS" OFF)
+OPTION(PA_USE_WDMKS_DEVICE_INFO "Use WDM/KS API for device info" OFF)
+ELSE(MINGW)
 OPTION(PA_USE_WMME "Enable support for MME" ON)
 OPTION(PA_USE_WASAPI "Enable support for WASAPI" ON)
 OPTION(PA_USE_WDMKS "Enable support for WDMKS" ON)
 OPTION(PA_USE_WDMKS_DEVICE_INFO "Use WDM/KS API for device info" ON)
+ENDIF(MINGW)
 MARK_AS_ADVANCED(PA_USE_WDMKS_DEVICE_INFO)
 IF(PA_USE_DS)
 OPTION(PA_USE_DIRECTSOUNDFULLDUPLEXCREATE "Use DirectSound full duplex create" ON)
@@ -335,6 +342,7 @@ CONFIGURE_FILE( cmake_support/options_cmake.h.in ${CMAKE_CURRENT_BINARY_DIR}/opt
 IF(WIN32)
 
 # http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
+# # If we use WMME on MinGW-w64 we need libwinmm.a
 IF(MINGW)
 TARGET_LINK_LIBRARIES(portaudio winmm)
 ENDIF(MINGW)
@@ -357,6 +365,12 @@ ENDIF(WIN32)
 
 OPTION(PA_BUILD_TESTS "Include test projects" OFF)
 OPTION(PA_BUILD_EXAMPLES "Include example projects" OFF)
+
+# slowriot https://github.com/slowriot/portaudio-mingw-w64
+# Prepared for inclusion of C++ bindings
+IF(PA_BUILD_CXX)
+SUBDIRS(bindings/cpp)
+ENDIF(PA_BUILD_CXX)
 
 # Prepared for inclusion of test files
 IF(PA_BUILD_TESTS)
