@@ -16,12 +16,14 @@ else(WIN32)
   message(FATAL_ERROR "FindDXSDK.cmake: Unsupported platform ${CMAKE_SYSTEM_NAME}" )
 endif(WIN32)
 
-file(GLOB results "${CMAKE_CURRENT_SOURCE_DIR}/../dx*")
-foreach(f ${results})
-  if(IS_DIRECTORY ${f})
-    set(DXSDK_DIR ${DXSDK_DIR} ${f})
-  endif()
-endforeach()
+if(MINGW)
+  file(GLOB results "${CMAKE_CURRENT_SOURCE_DIR}/../../../dx*")
+  foreach(f ${results})
+    if(IS_DIRECTORY ${f})
+      set(DXSDK_DIR ${DXSDK_DIR} ${f})
+    endif()
+  endforeach()
+endif(MINGW)
 
 find_path(DXSDK_ROOT_DIR
   include/dxsdkver.h
@@ -36,8 +38,8 @@ find_path(DXSDK_ROOT_DIR
 find_path(DXSDK_INCLUDE_DIR
   dxsdkver.h
   PATHS
-    ${DXSDK_ROOT_DIR}/include 
-)  
+    ${DXSDK_ROOT_DIR}/include
+)
 
 IF(CMAKE_CL_64 OR  CMAKE_C_COMPILER MATCHES "64")
 find_path(DXSDK_LIBRARY_DIR
@@ -53,13 +55,13 @@ find_path(DXSDK_LIBRARY_DIR
 )
 ENDIF(CMAKE_CL_64 OR CMAKE_C_COMPILER MATCHES "64")
 
-find_library(DXSDK_DSOUND_LIBRARY 
+find_library(DXSDK_DSOUND_LIBRARY
   dsound.lib
   PATHS
   ${DXSDK_LIBRARY_DIR}
 )
 
-# handle the QUIETLY and REQUIRED arguments and set DXSDK_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set DXSDK_FOUND to TRUE if
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(DXSDK DEFAULT_MSG DXSDK_ROOT_DIR DXSDK_INCLUDE_DIR)
