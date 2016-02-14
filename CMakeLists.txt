@@ -2,12 +2,15 @@
 #
 # For a "How-To" please refer to the Portaudio documentation at:
 # http://www.portaudio.com/trac/wiki/TutorialDir/Compile/CMake
-#
-PROJECT( portaudio )
+# Slightly patched version of portaudio svn rev. 1955
+# See https://www.assembla.com/spaces/portaudio/subversion/source
+# Main CMakeLists.txt and Asio- and DX-find modules adjusted for use in SC repo
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+cmake_policy(SET CMP0048 NEW)
+PROJECT( portaudio VERSION 19.1955.0.1)
 
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
+SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS OFF)
 
 OPTION(PA_CONFIG_LIB_OUTPUT_PATH "Make sure that output paths are kept neat" OFF)
 IF(CMAKE_CL_64 OR CMAKE_C_COMPILER MATCHES "64")
@@ -28,7 +31,7 @@ ADD_DEFINITIONS(-DPA_ENABLE_DEBUG_OUTPUT)
 ENDIF(PA_ENABLE_DEBUG_OUTPUT)
 
 IF(WIN32 AND MSVC)
-OPTION(PA_DLL_LINK_WITH_STATIC_RUNTIME "Link with static runtime libraries (minimizes runtime dependencies)" ON)
+OPTION(PA_DLL_LINK_WITH_STATIC_RUNTIME "Link with static runtime libraries (minimizes runtime dependencies)" OFF)
 IF(PA_DLL_LINK_WITH_STATIC_RUNTIME)
   FOREACH(flag_var
 		CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
@@ -47,11 +50,20 @@ IF(WIN32)
 OPTION(PA_UNICODE_BUILD "Enable Portaudio Unicode build" ON)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_support)
-# Try to find DirectX SDK
-FIND_PACKAGE(DXSDK)
-# Try to find ASIO SDK (assumes that portaudio and asiosdk folders are side-by-side, see
-# http://www.portaudio.com/trac/wiki/TutorialDir/Compile/WindowsASIOMSVC)
-FIND_PACKAGE(ASIOSDK)
+
+# Try to find ASIO- and DirectX SDKs (assumes that supercollider and dx7sdk
+# folders are side-by-side for MinGW build, or dx9 installed in system for VS
+# build. ASIO SDK should be side by side withc sc folder too)
+
+find_package(DXSDK)
+find_package(ASIOSDK)
+
+if(NOT ASIOSDK_ROOT_DIR)
+  message(WARNING "ASIO SDK not found. Portaudio wil be built without ASIO driver support (see README_WINDOWS.md)")
+endif()
+if(NOT DXSDK_ROOT_DIR)
+  message(WARNING "DirectX SDK not found. Portaudio will be built without dsound driver support (see README_WINDOWS.md)")
+endif()
 
 IF(ASIOSDK_FOUND)
 OPTION(PA_USE_ASIO "Enable support for ASIO" ON)
@@ -126,7 +138,10 @@ SOURCE_GROUP("hostapi\\ASIO" FILES
 SOURCE_GROUP("hostapi\\ASIO\\ASIOSDK" FILES
   ${PA_ASIOSDK_SOURCES}
 )
+
 ENDIF(PA_USE_ASIO)
+
+
 
 IF(PA_USE_DS)
 INCLUDE_DIRECTORIES(${DXSDK_INCLUDE_DIR})
@@ -300,22 +315,34 @@ SET_SOURCE_FILES_PROPERTIES(
 )
 ENDIF(PA_UNICODE_BUILD)
 
-ADD_LIBRARY(portaudio SHARED
-  ${PA_INCLUDES}
-  ${PA_COMMON_INCLUDES}
-  ${SOURCES_LESS_ASIO_SDK}
-  ${PA_ASIOSDK_SOURCES}
-  ${CMAKE_CURRENT_BINARY_DIR}/portaudio_cmake.def
-  ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
-)
+IF(NOT SC_BUILD_PA)
+  ADD_LIBRARY(portaudio SHARED
+    ${PA_INCLUDES}
+    ${PA_COMMON_INCLUDES}
+    ${SOURCES_LESS_ASIO_SDK}
+    ${PA_ASIOSDK_SOURCES}
+    ${CMAKE_CURRENT_BINARY_DIR}/portaudio_cmake.def
+    ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
+  )
 
-ADD_LIBRARY(portaudio_static STATIC
-  ${PA_INCLUDES}
-  ${PA_COMMON_INCLUDES}
-  ${SOURCES_LESS_ASIO_SDK}
-  ${PA_ASIOSDK_SOURCES}
-  ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
-)
+  ADD_LIBRARY(portaudio_static STATIC
+    ${PA_INCLUDES}
+    ${PA_COMMON_INCLUDES}
+    ${SOURCES_LESS_ASIO_SDK}
+    ${PA_ASIOSDK_SOURCES}
+    ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
+  )
+ENDIF(NOT SC_BUILD_PA)
+
+IF(SC_BUILD_PA)
+  ADD_LIBRARY(portaudio ${PA_LIBRARY_TYPE}
+    ${PA_COMMON_INCLUDES}
+    ${SOURCES_LESS_ASIO_SDK}
+    ${PA_ASIOSDK_SOURCES}
+    ${CMAKE_CURRENT_BINARY_DIR}/portaudio_cmake.def
+    ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
+  )
+ENDIF(SC_BUILD_PA)
 
 # Configure the exports file according to settings
 SET(GENERATED_MESSAGE "CMake generated file, do NOT edit! Use CMake-GUI to change configuration instead.")
@@ -323,10 +350,10 @@ CONFIGURE_FILE( cmake_support/template_portaudio.def ${CMAKE_CURRENT_BINARY_DIR}
 # Configure header for options (PA_USE_xxx)
 CONFIGURE_FILE( cmake_support/options_cmake.h.in ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h @ONLY )
 
+
 IF(WIN32)
 
-# http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
-# # If we use WMME on MinGW-w64 we need libwinmm.a
+# see http://permalink.gmane.org/gmane.comp.audio.portaudio.devel/11676
 IF(MINGW)
 TARGET_LINK_LIBRARIES(portaudio winmm)
 ENDIF(MINGW)
@@ -343,8 +370,10 @@ ENDIF(PA_USE_WDMKS)
 
 SET_TARGET_PROPERTIES(portaudio PROPERTIES OUTPUT_NAME portaudio_${TARGET_POSTFIX}
                                 FOLDER "Portaudio")
+IF(NOT SC_BUILD_PA)
 SET_TARGET_PROPERTIES(portaudio_static PROPERTIES OUTPUT_NAME portaudio_static_${TARGET_POSTFIX}
                                 FOLDER "Portaudio")
+ENDIF(NOT SC_BUILD_PA)
 ENDIF(WIN32)
 
 OPTION(PA_BUILD_CXX "Include C++ bindings" OFF)
