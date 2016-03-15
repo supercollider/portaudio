@@ -17,23 +17,25 @@ else(WIN32)
 endif(WIN32)
 
 if(MINGW)
-  file(GLOB results "${CMAKE_CURRENT_SOURCE_DIR}/../../../dx*")
+  file(GLOB results "${CMAKE_SOURCE_DIR}/../dx*")
   foreach(f ${results})
     if(IS_DIRECTORY ${f})
-      set(DXSDK_DIR ${DXSDK_DIR} ${f})
+      set(DXSDK_DIR ${DXSDK_DIR} ${f} CACHE PATH "DX SDK directory")
     endif()
   endforeach()
-endif(MINGW)
-
-find_path(DXSDK_ROOT_DIR
-  include/dxsdkver.h
-  HINTS
-    if(MINGW)
+  find_path(DXSDK_ROOT_DIR
+    include/dxsdkver.h
+    HINTS
       ${DXSDK_DIR}
-    else(MINGW)
+  )
+elseif(MSVC)
+  set(DXSDK_DIR $ENV{DXSDK_DIR})
+  find_path(DXSDK_ROOT_DIR
+    include/dxsdkver.h
+    HINTS
       $ENV{DXSDK_DIR}
-    endif(MINGW)
-)
+  )
+endif(MINGW)
 
 find_path(DXSDK_INCLUDE_DIR
   dxsdkver.h
@@ -41,25 +43,29 @@ find_path(DXSDK_INCLUDE_DIR
     ${DXSDK_ROOT_DIR}/include
 )
 
-IF(CMAKE_CL_64 OR  CMAKE_C_COMPILER MATCHES "64")
+IF(CMAKE_LIBRARY_ARCHITECTURE STREQUAL "x64")
 find_path(DXSDK_LIBRARY_DIR
   dsound.lib
-  PATHS
+  HINTS
   ${DXSDK_ROOT_DIR}/lib/x64
 )
-ELSE(CMAKE_CL_64 OR CMAKE_C_COMPILER MATCHES "64")
+find_library(DXSDK_DSOUND_LIBRARY
+  dsound
+  HINTS
+  ${DXSDK_ROOT_DIR}/lib/x64
+)
+ELSEIF(CMAKE_LIBRARY_ARCHITECTURE STREQUAL "x86")
 find_path(DXSDK_LIBRARY_DIR
   dsound.lib
-  PATHS
+  HINTS
   ${DXSDK_ROOT_DIR}/lib/x86
 )
-ENDIF(CMAKE_CL_64 OR CMAKE_C_COMPILER MATCHES "64")
-
 find_library(DXSDK_DSOUND_LIBRARY
-  dsound.lib
-  PATHS
-  ${DXSDK_LIBRARY_DIR}
+  dsound
+  HINTS
+  ${DXSDK_ROOT_DIR}/lib/x86
 )
+ENDIF()
 
 # handle the QUIETLY and REQUIRED arguments and set DXSDK_FOUND to TRUE if
 # all listed variables are TRUE
