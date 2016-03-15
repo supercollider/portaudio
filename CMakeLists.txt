@@ -59,10 +59,10 @@ find_package(DXSDK)
 find_package(ASIOSDK)
 
 if(NOT ASIOSDK_ROOT_DIR)
-  message(WARNING "ASIO SDK not found. Portaudio wil be built without ASIO driver support (see README_WINDOWS.md)")
+  message(STATUS "ASIO SDK not found. Portaudio wil be built without ASIO driver support (see README_WINDOWS.md)")
 endif()
 if(NOT DXSDK_ROOT_DIR)
-  message(WARNING "DirectX SDK not found. Portaudio will be built without dsound driver support (see README_WINDOWS.md)")
+  message(STATUS "DirectX SDK not found. Portaudio will be built without dsound driver support (see README_WINDOWS.md)")
 endif()
 
 IF(ASIOSDK_FOUND)
@@ -315,34 +315,13 @@ SET_SOURCE_FILES_PROPERTIES(
 )
 ENDIF(PA_UNICODE_BUILD)
 
-IF(NOT SC_BUILD_PA)
-  ADD_LIBRARY(portaudio SHARED
-    ${PA_INCLUDES}
-    ${PA_COMMON_INCLUDES}
-    ${SOURCES_LESS_ASIO_SDK}
-    ${PA_ASIOSDK_SOURCES}
-    ${CMAKE_CURRENT_BINARY_DIR}/portaudio_cmake.def
-    ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
-  )
-
-  ADD_LIBRARY(portaudio_static STATIC
-    ${PA_INCLUDES}
-    ${PA_COMMON_INCLUDES}
-    ${SOURCES_LESS_ASIO_SDK}
-    ${PA_ASIOSDK_SOURCES}
-    ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
-  )
-ENDIF(NOT SC_BUILD_PA)
-
-IF(SC_BUILD_PA)
-  ADD_LIBRARY(portaudio ${PA_LIBRARY_TYPE}
-    ${PA_COMMON_INCLUDES}
-    ${SOURCES_LESS_ASIO_SDK}
-    ${PA_ASIOSDK_SOURCES}
-    ${CMAKE_CURRENT_BINARY_DIR}/portaudio_cmake.def
-    ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
-  )
-ENDIF(SC_BUILD_PA)
+ADD_LIBRARY(portaudio ${PA_LIBRARY_TYPE}
+  ${PA_COMMON_INCLUDES}
+  ${SOURCES_LESS_ASIO_SDK}
+  ${PA_ASIOSDK_SOURCES}
+  ${CMAKE_CURRENT_BINARY_DIR}/portaudio_cmake.def
+  ${CMAKE_CURRENT_BINARY_DIR}/options_cmake.h
+)
 
 # Configure the exports file according to settings
 SET(GENERATED_MESSAGE "CMake generated file, do NOT edit! Use CMake-GUI to change configuration instead.")
@@ -370,10 +349,6 @@ ENDIF(PA_USE_WDMKS)
 
 SET_TARGET_PROPERTIES(portaudio PROPERTIES OUTPUT_NAME portaudio_${TARGET_POSTFIX}
                                 FOLDER "Portaudio")
-IF(NOT SC_BUILD_PA)
-SET_TARGET_PROPERTIES(portaudio_static PROPERTIES OUTPUT_NAME portaudio_static_${TARGET_POSTFIX}
-                                FOLDER "Portaudio")
-ENDIF(NOT SC_BUILD_PA)
 ENDIF(WIN32)
 
 OPTION(PA_BUILD_CXX "Include C++ bindings" OFF)
