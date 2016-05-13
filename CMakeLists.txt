@@ -51,17 +51,21 @@ OPTION(PA_UNICODE_BUILD "Enable Portaudio Unicode build" ON)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_support)
 
-# Try to find ASIO- and DirectX SDKs (assumes that supercollider and dx7sdk
-# folders are side-by-side for MinGW build, or dx9 installed in system for VS
-# build. ASIO SDK should be side by side withc sc folder too)
+# Try to find ASIO- and DirectX SDKs/libraries
+# ASIO: assumes that the  ASID-SDK is copied to a folder "side-by-side" to the
+# SC source (*not* the PA source)
+# DirectX-VS: assumes that dx9sdk is installed in the system
+# DirectX-MinGW: uses DSound libraries provided by MinGW (full-duplex set to off)
 
-find_package(DXSDK)
+IF(MSVC)
+  find_package(DXSDK)
+ENDIF(MSVC)
 find_package(ASIOSDK)
 
 if(NOT ASIOSDK_ROOT_DIR)
   message(STATUS "ASIO SDK not found. Portaudio wil be built without ASIO driver support (see README_WINDOWS.md)")
 endif()
-if(NOT DXSDK_ROOT_DIR)
+if(MSVC AND NOT DXSDK_ROOT_DIR)
   message(STATUS "DirectX SDK not found. Portaudio will be built without dsound driver support (see README_WINDOWS.md)")
 endif()
 
@@ -70,11 +74,11 @@ OPTION(PA_USE_ASIO "Enable support for ASIO" ON)
 ELSE(ASIOSDK_FOUND)
 OPTION(PA_USE_ASIO "Enable support for ASIO" OFF)
 ENDIF(ASIOSDK_FOUND)
-IF(DXSDK_FOUND)
+IF(MINGW OR DXSDK_FOUND)
 OPTION(PA_USE_DS "Enable support for DirectSound" ON)
-ELSE(DXSDK_FOUND)
+ELSE(MINGW OR DXSDK_FOUND)
 OPTION(PA_USE_DS "Enable support for DirectSound" OFF)
-ENDIF(DXSDK_FOUND)
+ENDIF(MINGW OR DXSDK_FOUND)
 OPTION(PA_USE_WMME "Enable support for MME" ON)
 OPTION(PA_USE_WDMKS "Enable support for WDMKS" ON)
 OPTION(PA_USE_WDMKS_DEVICE_INFO "Use WDM/KS API for device info" ON)
@@ -85,7 +89,11 @@ OPTION(PA_USE_WASAPI "Enable support for WASAPI" ON)
 ENDIF(MINGW)
 MARK_AS_ADVANCED(PA_USE_WDMKS_DEVICE_INFO)
 IF(PA_USE_DS)
-OPTION(PA_USE_DIRECTSOUNDFULLDUPLEXCREATE "Use DirectSound full duplex create" ON)
+  IF(MINGW)
+    OPTION(PA_USE_DIRECTSOUNDFULLDUPLEXCREATE "Use DirectSound full duplex create" OFF)
+  ELSE(MINGW)
+    OPTION(PA_USE_DIRECTSOUNDFULLDUPLEXCREATE "Use DirectSound full duplex create" ON)
+  ENDIF(MINGW)
 MARK_AS_ADVANCED(PA_USE_DIRECTSOUNDFULLDUPLEXCREATE)
 ENDIF(PA_USE_DS)
 ENDIF(WIN32)
@@ -144,7 +152,9 @@ ENDIF(PA_USE_ASIO)
 
 
 IF(PA_USE_DS)
-INCLUDE_DIRECTORIES(${DXSDK_INCLUDE_DIR})
+  IF(MSVC)
+    INCLUDE_DIRECTORIES(${DXSDK_INCLUDE_DIR})
+  ENDIF(MSVC)
 INCLUDE_DIRECTORIES(src/os/win)
 
 SET(PA_DS_INCLUDES
@@ -338,9 +348,14 @@ TARGET_LINK_LIBRARIES(portaudio winmm)
 ENDIF(MINGW)
 
 # If we use DirectSound, we need this for the library to be found (if not in VS project settings)
-IF(PA_USE_DS AND DXSDK_FOUND)
+IF(PA_USE_DS)
+IF(MSVC)
 TARGET_LINK_LIBRARIES(portaudio ${DXSDK_DSOUND_LIBRARY})
-ENDIF(PA_USE_DS AND DXSDK_FOUND)
+ELSE(MSVC)
+TARGET_LINK_LIBRARIES(portaudio dsound)
+message(STATUS "Building with DSound support provided by MinGW")
+ENDIF(MSVC)
+ENDIF(PA_USE_DS)
 
 # If we use WDM/KS we need setupapi.lib
 IF(PA_USE_WDMKS)
