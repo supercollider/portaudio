@@ -1,7 +1,7 @@
 # $Id: $
 #
 # Slightly adjusted CMakeLists.txt for SuperCollider build.
-# Thanks Portaudio cummunity for this awsome release!
+# Thanks Portaudio community for this awesome release!
 #
 # For a "How-To" please refer to the Portaudio documentation at:
 # http://www.portaudio.com/trac/wiki/TutorialDir/Compile/CMake
