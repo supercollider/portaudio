@@ -102,7 +102,7 @@ if [[ "$with_asio" = "yes" ] || [ "$enable_cxx" = "yes" ]] ; then
        AC_PROG_CXX
 fi
 AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(AR, ar, no)
